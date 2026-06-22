@@ -17,7 +17,7 @@ var commandMap = map[string]cliCommand{}
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-	commandMap = map[string]cliCommand {
+	commandMap = map[string]cliCommand{
 		"exit": {
 			name: "exit",
 			description: "Exit the Pokedex",
