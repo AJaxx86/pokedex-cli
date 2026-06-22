@@ -4,34 +4,58 @@ import (
 	"fmt"
 	"bufio"
 	"os"
+	"github.com/ajaxx86/pokedex-cli/internal/poke-api"
 )
 
 type cliCommand struct {
 	name string
 	description string
-	callback func() error
+	callback func(*cmdConfig) error
+	config *cmdConfig
+}
+type cmdConfig struct {
+	nextAreaURL string
+	prevAreaURL string
 }
 
-var commandMap = map[string]cliCommand{}
+var commands map[string]cliCommand
 
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
-	commandMap = map[string]cliCommand{
+	cfg := &cmdConfig{
+		nextAreaURL: "https://pokeapi.co/api/v2/location-area/",
+		prevAreaURL: "",
+	}
+	commands = map[string]cliCommand{
 		"exit": {
 			name: "exit",
 			description: "Exit the Pokedex",
 			callback: commandExit,
+			config: cfg,
 		},
 		"help": {
 			name: "help",
 			description: "Displays a help message",
 			callback: commandHelp,
+			config: cfg,
+		},
+		"map": {
+			name: "map",
+			description: "Gets the next 20 areas from the Pokemon world",
+			callback: commandMap,
+			config: cfg,
+		},
+		"mapb": {
+			name: "mapb",
+			description: "Gets the last 20 areas from the Pokemon world",
+			callback: commandMapBack,
+			config: cfg,
 		},
 	}
-	
+
 	for {
-		fmt.Print("Pokedex > ")
+		fmt.Print("\nPokedex > ")
 		scanner.Scan()
 		if scanner.Err() != nil {
 			fmt.Println("err:", scanner.Err())
@@ -43,9 +67,9 @@ func main() {
 			fmt.Println("err: empty string entered")
 			continue
 		}
-		
-		if command, ok := commandMap[safeInput[0]]; ok {
-			if err := command.callback(); err != nil {
+
+		if command, ok := commands[safeInput[0]]; ok {
+			if err := command.callback(cfg); err != nil {
 				fmt.Println("err:", err)
 			}
 			continue
@@ -55,17 +79,49 @@ func main() {
 }
 
 
-func commandExit() error {
+func commandExit(cfg *cmdConfig) error {
 	fmt.Println("Closing the Pokedex... Goodbye!")
 	os.Exit(0)
 	return nil
 }
 
 
-func commandHelp() error {
+func commandHelp(cfg *cmdConfig) error {
 	fmt.Println("Welcome to the Pokedex!\nUsage:")
-	for _, command := range commandMap {
-		fmt.Printf("%s: %s\n", command.name, command.description)
+	for _, command := range commands {
+		fmt.Println(command.name + ":", command.description)
 	}
+	return nil
+}
+
+
+func commandMap(cfg *cmdConfig) error {
+	areas, nextURL, prevURL, err := pokeapi.GetAreas(cfg.nextAreaURL)
+	if err != nil {
+		return err
+	}
+
+	cfg.nextAreaURL = nextURL
+	cfg.prevAreaURL = prevURL
+	for _, area := range areas {
+		fmt.Println(area)
+	}
+
+	return nil
+}
+
+
+func commandMapBack(cfg *cmdConfig) error {
+	areas, nextURL, prevURL, err := pokeapi.GetAreas(cfg.prevAreaURL)
+	if err != nil {
+		return err
+	}
+
+	cfg.nextAreaURL = nextURL
+	cfg.prevAreaURL = prevURL
+	for _, area := range areas {
+		fmt.Println(area)
+	}
+
 	return nil
 }
