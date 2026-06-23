@@ -1,6 +1,8 @@
 package main
 
-import "testing"
+import (
+	"testing"
+)
 
 func TestCleanInput(t *testing.T) {
 	cases := []struct {
@@ -21,7 +23,7 @@ func TestCleanInput(t *testing.T) {
 		},
 		{
 			input: "This Sentence has some CAPITAL letters",
-			expected: []string{"This", "Sentence", "has", "some", "CAPITAL", "letters"},
+			expected: []string{"this", "sentence", "has", "some", "capital", "letters"},
 		},
 	}
 
@@ -31,7 +33,7 @@ func TestCleanInput(t *testing.T) {
 			t.Errorf("no strings returned")
 			continue
 		}
-		
+
 		for i := range actual {
 			word := actual[i]
 			expectedWord := c.expected[i]

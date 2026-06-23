@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"bufio"
 	"os"
-	"github.com/ajaxx86/pokedex-cli/internal/poke-api"
+	"github.com/ajaxx86/pokedex-cli/internal/pokeapi"
 )
 
 type cliCommand struct {
@@ -19,12 +19,14 @@ type cmdConfig struct {
 }
 
 var commands map[string]cliCommand
+var client pokeapi.Client
 
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
+	client = pokeapi.NewClient()
 	cfg := &cmdConfig{
-		nextAreaURL: "https://pokeapi.co/api/v2/location-area/",
+		nextAreaURL: "https://pokeapi.co/api/v2/location-area/?offset=0&limit=20",
 		prevAreaURL: "",
 	}
 	commands = map[string]cliCommand{
@@ -96,7 +98,7 @@ func commandHelp(cfg *cmdConfig) error {
 
 
 func commandMap(cfg *cmdConfig) error {
-	areas, nextURL, prevURL, err := pokeapi.GetAreas(cfg.nextAreaURL)
+	areas, nextURL, prevURL, err := client.GetAreas(cfg.nextAreaURL)
 	if err != nil {
 		return err
 	}
@@ -112,7 +114,7 @@ func commandMap(cfg *cmdConfig) error {
 
 
 func commandMapBack(cfg *cmdConfig) error {
-	areas, nextURL, prevURL, err := pokeapi.GetAreas(cfg.prevAreaURL)
+	areas, nextURL, prevURL, err := client.GetAreas(cfg.prevAreaURL)
 	if err != nil {
 		return err
 	}
