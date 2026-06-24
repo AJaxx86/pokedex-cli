@@ -23,6 +23,15 @@ type locationArea struct {
 		URL string `json:"url"`
 	} `json:"results"`
 }
+type locationAreaEncounters struct {
+	AreaName string `json:"name"`
+	Encounters []struct {
+		Pokemon struct {
+			Name string `json:"name"`
+			URL string `json:"url"`
+		}`json:"pokemon"`
+	}`json:"pokemon_encounters"`
+}
 
 
 func NewClient() Client {
@@ -69,4 +78,39 @@ func (cl *Client) GetAreas(url string) ([]string, string, string, error) {
 	}
 
 	return areas, locArea.Next, locArea.Previous, nil
+}
+
+
+func (cl *Client) GetEncounters(areaName string) ([]string, error) {
+	fullURL := fmt.Sprintf("https://pokeapi.co/api/v2/location-area/%s/", areaName)
+	entry, found := cl.cache.Get(fullURL)
+	if !found {
+		res, err := cl.http.Get(fullURL)
+		if err != nil {
+			return nil, err
+		}
+		defer res.Body.Close()
+		if res.StatusCode > 299 {
+			return nil, fmt.Errorf("Network error: %v", res.StatusCode)
+		}
+
+		entry, err = io.ReadAll(res.Body)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	areaEncounters := locationAreaEncounters{}
+	jErr := json.Unmarshal(entry, &areaEncounters)
+	if jErr != nil {
+		return nil, jErr
+	}
+	cl.cache.Add(fullURL, entry)
+
+	result := []string{}
+	for _, encounter := range areaEncounters.Encounters {
+		result = append(result, encounter.Pokemon.Name)
+	}
+
+	return result, nil
 }

@@ -100,7 +100,7 @@ func TestGetMissingKey(t *testing.T) {
 
 func TestReapLoop(t *testing.T) {
 	const baseTime = 5 * time.Millisecond
-	const waitTime = baseTime + 5*time.Millisecond
+	const waitTime = baseTime + 5 * time.Millisecond
 	cache := NewCache(baseTime)
 	defer cache.Stop()
 	cache.Add("https://example.com", []byte("testdata"))
