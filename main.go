@@ -76,6 +76,12 @@ func main() {
 			callback: commandInspect,
 			config: cfg,
 		},
+		"pokedex": {
+			name: "pokedex",
+			description: "Shows a list of the Pokemon you've caught",
+			callback: commandPokedex,
+			config: cfg,
+		},
 	}
 
 	for {
@@ -194,7 +200,7 @@ func commandCatch(cfg *cmdConfig, args []string) error {
 }
 
 
-func commandInspect(cfg *cmdConfig, args[]string) error {
+func commandInspect(cfg *cmdConfig, args []string) error {
 	name := args[0]
 	stats, ok := inventory[name]
 	if !ok {
@@ -211,6 +217,20 @@ func commandInspect(cfg *cmdConfig, args[]string) error {
 	fmt.Println("Types:")
 	for _, pType := range stats.Types {
 		fmt.Printf("  - %s", pType.Type.Name)
+	}
+	return nil
+}
+
+
+func commandPokedex(cfg *cmdConfig, args []string) error {
+	if len(inventory) == 0 {
+		fmt.Println("You haven't caught any pokemon yet. Use the catch command to catch some!")
+		return nil
+	}
+
+	fmt.Println("Your Pokedex:")
+	for _, p := range inventory {
+		fmt.Printf(" - %s\n", p.Name)
 	}
 	return nil
 }
