@@ -8,11 +8,32 @@ import (
 	"github.com/ajaxx86/pokedex-cli/internal/pokecache"
 )
 
-const URL = "https://pokeapi.co/api/v2/"
-
 type Client struct {
 	cache *pokecache.Cache
 	http http.Client
+}
+type Pokemon struct {
+	ID int `json:"id"`
+	Name string `json:"name"`
+	BaseExperience int `json:"base_experience"`
+	Height int `json:"height"`
+	Weight int `json:"weight"`
+	Abilities []struct {
+		Ability struct {
+			Name string `json:"name"`
+		} `json:"ability"`
+	} `json:"abilities"`
+	Stats []struct {
+		BaseStat int `json:"base_stat"`
+		Stat struct {
+			Name string `json:"name"`
+		} `json:"stat"`
+	} `json:"stats"`
+	Types []struct {
+		Type struct {
+			Name string `json:"name"`
+		} `json:"type"`
+	} `json:"types"`
 }
 type locationArea struct {
 	Count int `json:"count"`
@@ -110,6 +131,35 @@ func (cl *Client) GetEncounters(areaName string) ([]string, error) {
 	result := []string{}
 	for _, encounter := range areaEncounters.Encounters {
 		result = append(result, encounter.Pokemon.Name)
+	}
+
+	return result, nil
+}
+
+
+func (cl *Client) GetPokemonStats(name string) (Pokemon, error) {
+	fullURL := "https://pokeapi.co/api/v2/pokemon/" + name
+	entry, found := cl.cache.Get(fullURL)
+	if !found {
+		res, err := cl.http.Get(fullURL)
+		if err != nil {
+			return Pokemon{}, err
+		}
+		defer res.Body.Close()
+		if res.StatusCode > 299 {
+			return Pokemon{}, fmt.Errorf("Network error: %v", res.StatusCode)
+		}
+
+		entry, err = io.ReadAll(res.Body)
+		if err != nil {
+			return Pokemon{}, err
+		}
+	}
+
+	result := Pokemon{}
+	jErr := json.Unmarshal(entry, &result)
+	if jErr != nil {
+		return Pokemon{}, jErr
 	}
 
 	return result, nil

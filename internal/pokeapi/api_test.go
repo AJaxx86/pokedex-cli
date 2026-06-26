@@ -178,3 +178,36 @@ func TestGetAreasInvalidJSON(t *testing.T) {
 		t.Errorf("expected nil areas on error, got %v", areas)
 	}
 }
+
+func TestGetPokemonStatsSuccess(t *testing.T) {
+	cl := NewClient()
+
+	pokemon, err := cl.GetPokemonStats("pikachu")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if pokemon.Name != "pikachu" {
+		t.Errorf("unexpected name: %q", pokemon.Name)
+	}
+	if pokemon.ID != 25 {
+		t.Errorf("unexpected id: %d", pokemon.ID)
+	}
+}
+
+func TestGetPokemonStatsHTTPError(t *testing.T) {
+	cl := NewClient()
+
+	_, err := cl.GetPokemonStats("missing")
+	if err == nil {
+		t.Errorf("expected error for missing pokemon, got nil")
+	}
+}
+
+func TestGetPokemonStatsInvalidJSON(t *testing.T) {
+	cl := NewClient()
+
+	_, err := cl.GetPokemonStats("badjson")
+	if err == nil {
+		t.Errorf("expected JSON unmarshal error, got nil")
+	}
+}

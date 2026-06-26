@@ -22,11 +22,13 @@ type cmdConfig struct {
 
 var commands map[string]cliCommand
 var client pokeapi.Client
+var inventory map[string]pokeapi.Pokemon
 
 
 func main() {
 	scanner := bufio.NewScanner(os.Stdin)
 	client = pokeapi.NewClient()
+	inventory = make(map[string]pokeapi.Pokemon)
 	cfg := &cmdConfig{
 		nextAreaURL: "https://pokeapi.co/api/v2/location-area/?offset=0&limit=20",
 		prevAreaURL: "",
@@ -67,7 +69,13 @@ func main() {
 			description: "Tries to catch the Pokemon and add it to your Pokedex (i.e. catch pikachu)",
 			callback: commandCatch,
 			config: cfg,
-		}
+		},
+		"inspect": {
+			name: "inspect",
+			description: "Shows stats for caught Pokemon",
+			callback: commandInspect,
+			config: cfg,
+		},
 	}
 
 	for {
@@ -167,6 +175,42 @@ func commandExplore(cfg *cmdConfig, args []string) error {
 
 
 func commandCatch(cfg *cmdConfig, args []string) error {
-	
+	stats, err := client.GetPokemonStats(args[0])
+	if err != nil {
+		return err
+	}
+
+	catchThreshold := 40
+	upperThreshold := stats.BaseExperience
+	fmt.Printf("Throwing a Pokeball at %s...\n", stats.Name)
+
+	if rand.Int() % upperThreshold <= catchThreshold {
+		fmt.Printf("%s was caught!\n", stats.Name)
+		inventory[stats.Name] = stats
+	} else {
+		fmt.Printf("%s escaped!\n", stats.Name)
+	}
+	return nil
+}
+
+
+func commandInspect(cfg *cmdConfig, args[]string) error {
+	name := args[0]
+	stats, ok := inventory[name]
+	if !ok {
+		return fmt.Errorf("You have not caught a %s yet")
+	}
+
+	fmt.Printf("Name: %s\n", stats.Name)
+	fmt.Printf("Height: %v\n", stats.Height)
+	fmt.Printf("Weight: %v\n", stats.Weight)
+	fmt.Println("Stats:")
+	for _, stat := range stats.Stats {
+		fmt.Printf("  - %s: %v\n", stat.Stat.Name, stat.BaseStat)
+	}
+	fmt.Println("Types:")
+	for _, pType := range stats.Types {
+		fmt.Printf("  - %s", pType.Type.Name)
+	}
 	return nil
 }
